@@ -1,51 +1,73 @@
 import { LightningElement, track } from 'lwc';
+import processSAID from '@salesforce/apex/SAIDController.processSAID';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 export default class IdSearch extends LightningElement {
-  @track idNumber = '';
-  @track errorMessage = '';
-  @track isSearchDisabled = true;
+    @track idNumber = '';
+    @track errorMessage = '';
+    @track isSearchDisabled = true;
+    @track dob = '';
+    @track gender = '';
+    @track citizen = false;
+    @track holidays = [];
+    @track showResult = false;
 
-  handleIdChange(event) {
-    this.idNumber = event.target.value.trim();
-    this.errorMessage = '';
-    this.isSearchDisabled = true;
+    handleIdChange(event) {
+        this.idNumber = event.target.value.trim();
+        this.errorMessage = '';
+        this.isSearchDisabled = true;
+        this.showResult = false;
 
-    // must be exactly 13 digits
-    if (!/^\d{13}$/.test(this.idNumber)) {
-      if (this.idNumber.length > 0) {
-        this.errorMessage = 'ID must be exactly 13 digits';
-      }
-      return;
+        if (!/^\d{13}$/.test(this.idNumber)) {
+            if (this.idNumber.length > 0) {
+                this.errorMessage = 'ID must be exactly 13 digits';
+            }
+            return;
+        }
+
+        if (!this.luhnCheck(this.idNumber)) {
+            this.errorMessage = 'Invalid SA ID (failed Luhn check)';
+            return;
+        }
+
+        this.isSearchDisabled = false;
     }
 
-    // Luhn check
-    if (!this.luhnCheck(this.idNumber)) {
-      this.errorMessage = 'Invalid SA ID (failed Luhn check)';
-      return;
+    luhnCheck(id) {
+        let sum = 0;
+        for (let i = 0; i < 12; i++) {
+            let digit = parseInt(id[i]);
+            sum += i % 2 === 0 ? digit : (digit * 2 > 9 ? digit * 2 - 9 : digit * 2);
+        }
+        let checkDigit = (10 - (sum % 10)) % 10;
+        return checkDigit === parseInt(id[12]);
     }
 
-    // all good!
-    this.isSearchDisabled = false;
-  }
+    async handleSearch() {
+        try {
+            const result = await processSAID({ idNumber: this.idNumber });
+            this.dob = result.dob;
+            this.gender = result.gender;
+            this.citizen = result.citizen;
+            this.holidays = result.holidays;
+            this.showResult = true;
 
-  luhnCheck(id) {
-    let sum = 0;
-    // iterate from rightmost digit
-    for (let i = 0; i < id.length; i++) {
-      let digit = parseInt(id.charAt(12 - i), 10);
-      // double every 2nd digit
-      if (i % 2 === 1) {
-        digit *= 2;
-        if (digit > 9) digit -= 9;
-      }
-      sum += digit;
+            this.dispatchEvent(
+                new ShowToastEvent({
+                    title: 'Success',
+                    message: 'ID processed and holidays fetched successfully',
+                    variant: 'success'
+                })
+            );
+        } catch (error) {
+            this.errorMessage = error.body?.message || 'Error processing ID or fetching holidays';
+            this.dispatchEvent(
+                new ShowToastEvent({
+                    title: 'Error',
+                    message: this.errorMessage,
+                    variant: 'error'
+                })
+            );
+        }
     }
-    return sum % 10 === 0;
-  }
-
-  handleSearch() {
-    // at this point idNumber is valid
-    // for now just log; in US3 we'll call Apex
-    console.log('Searching for SA ID:', this.idNumber);
-  }
 }

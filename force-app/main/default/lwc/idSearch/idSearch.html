@@ -1,30 +1,41 @@
 <template>
-  <lightning-card title="SA ID Holiday Checker">
-    <div class="slds-p-around_medium">
-      //Info / description 
-      <p>Enter your South African ID number below to see if there are any public or banking holidays in your birth year.</p>
-
-      //Input field
-      <lightning-input
-        label="SA ID Number"
-        placeholder="e.g. 8001015009087"
-        value={idNumber}
-        onchange={handleIdChange}>
-      </lightning-input>
-
-      //Inline error message 
-      <template if:true={errorMessage}>
-        <p class="slds-text-color_error slds-m-top_x-small">{errorMessage}</p>
-      </template>
-
-      //Search button disabled until valid 
-      <lightning-button
-        label="Search"
-        variant="brand"
-        class="slds-m-top_medium"
-        onclick={handleSearch}
-        disabled={isSearchDisabled}>
-      </lightning-button>
-    </div>
-  </lightning-card>
+    <lightning-card title="SA ID Holiday Checker">
+        <div class="slds-p-around_medium">
+            <p>Enter your South African ID number to see if there are any public or banking holidays in your birth year.</p>
+            <lightning-input
+                label="SA ID Number"
+                placeholder="e.g. 8001015009087"
+                value={idNumber}
+                onchange={handleIdChange}
+                max-length="13">
+            </lightning-input>
+            <template if:true={errorMessage}>
+                <p class="slds-text-color_error slds-m-top_x-small">{errorMessage}</p>
+            </template>
+            <lightning-button
+                label="Search"
+                variant="brand"
+                class="slds-m-top_medium"
+                onclick={handleSearch}
+                disabled={isSearchDisabled}>
+            </lightning-button>
+            <template if:true={showResult}>
+                <p class="slds-m-top_medium">Date of Birth: {dob}</p>
+                <p>Gender: {gender}</p>
+                <p>SA Citizen: {citizen}</p>
+                <template if:true={holidays}>
+                    <lightning-card title="Public Holidays">
+                        <ul class="slds-list_dotted">
+                            <template for:each={holidays} for:item="holiday">
+                                <li key={holiday.name}>{holiday.name} - {holiday.date}</li>
+                            </template>
+                        </ul>
+                    </lightning-card>
+                </template>
+                <template if:false={holidays}>
+                    <p>No public holidays found for your birth year.</p>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
 </template>
