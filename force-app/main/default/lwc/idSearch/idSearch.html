@@ -1,9 +1,8 @@
 <template>
   <lightning-card title="SA ID Holiday Checker">
     <div class="slds-p-around_medium">
-        
-      //Info / description
-      <p>Enter your South African ID number below to find out if there are any important public holidays in your birth year.</p>
+      //Info / description 
+      <p>Enter your South African ID number below to see if there are any public or banking holidays in your birth year.</p>
 
       //Input field
       <lightning-input
@@ -13,12 +12,18 @@
         onchange={handleIdChange}>
       </lightning-input>
 
-      //Search button 
+      //Inline error message 
+      <template if:true={errorMessage}>
+        <p class="slds-text-color_error slds-m-top_x-small">{errorMessage}</p>
+      </template>
+
+      //Search button disabled until valid 
       <lightning-button
         label="Search"
-        onclick={handleSearch}
+        variant="brand"
         class="slds-m-top_medium"
-        variant="brand">
+        onclick={handleSearch}
+        disabled={isSearchDisabled}>
       </lightning-button>
     </div>
   </lightning-card>
