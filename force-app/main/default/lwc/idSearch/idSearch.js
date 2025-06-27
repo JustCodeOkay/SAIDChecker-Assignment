@@ -1,4 +1,8 @@
 import { LightningElement, track } from 'lwc';
+import processSAID from '@salesforce/apex/SAIDController.processSAID';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+
+
 
 export default class IdSearch extends LightningElement {
   @track idNumber = '';
@@ -43,9 +47,29 @@ export default class IdSearch extends LightningElement {
     return sum % 10 === 0;
   }
 
-  handleSearch() {
-    // at this point idNumber is valid
-    // for now just log; in US3 we'll call Apex
-    console.log('Searching for SA ID:', this.idNumber);
-  }
+async handleSearch() {
+    try {
+        const result = await processSAID({ idNumber: this.idNumber });
+        this.dob = result.dob;
+        this.gender = result.gender;
+        this.citizen = result.citizen;
+        this.showResult = true;
+        this.dispatchEvent(
+            new ShowToastEvent({
+                title: 'Success',
+                message: 'ID processed and stored successfully',
+                variant: 'success'
+            })
+        );
+    } catch (error) {
+        this.errorMessage = error.body?.message || 'Error processing ID';
+        this.dispatchEvent(
+            new ShowToastEvent({
+                title: 'Error',
+                message: this.errorMessage,
+                variant: 'error'
+            })
+        );
+    }
+}
 }
