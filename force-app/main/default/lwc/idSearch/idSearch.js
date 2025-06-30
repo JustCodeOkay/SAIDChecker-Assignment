@@ -25,6 +25,19 @@ export default class IdSearch extends LightningElement {
             return;
         }
 
+        // Validate date portion (YYMMDD)
+    let year = parseInt(this.idNumber.substring(0, 2));
+    let month = parseInt(this.idNumber.substring(2, 4));
+    let day = parseInt(this.idNumber.substring(4, 6));
+    if (month < 1 || month > 12) {
+        this.errorMessage = 'Invalid month in ID number';
+        return;
+    }
+    if (day < 1 || day > 31) {
+        this.errorMessage = 'Invalid day in ID number';
+        return;
+    }
+
         if (!this.luhnCheck(this.idNumber)) {
             this.errorMessage = 'Invalid SA ID (failed Luhn check)';
             return;
